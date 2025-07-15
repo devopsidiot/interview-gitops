@@ -1,0 +1,7 @@
+#!/bin/bash
+for i in *.sops.yaml; do
+    [[ $i == "*.sops.yaml" ]] && break
+    ENCRYPTED_FILE=$i
+    DECRYPTED_FILE=$(echo $ENCRYPTED_FILE | cut -d'.' -f 1).decrypted.yaml
+    sops --decrypt $ENCRYPTED_FILE > $DECRYPTED_FILE
+done

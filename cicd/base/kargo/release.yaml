@@ -1,0 +1,70 @@
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: kargo
+  namespace: kargo
+spec:
+  releaseName: kargo
+  chart:
+    spec:
+      chart: kargo
+      sourceRef:
+        kind: HelmRepository
+        name: kargo
+        namespace: flux-system
+      version: 0.1.0
+  interval: 1h0m0s
+  install:
+    remediation:
+      retries: 3
+  # https://github.com/akuity/kargo/blob/v0.2.1/charts/kargo/values.yaml
+  values:
+    api:
+      host: kargo.rnd.devopsidiot.com
+      ingress:
+        enabled: false
+        annotations:
+          alb.ingress.kubernetes.io/scheme: internal
+          alb.ingress.kubernetes.io/ssl-policy: ELBSecurityPolicy-TLS-1-2-Ext-2018-06
+          alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS":443}]'
+          alb.ingress.kubernetes.io/backend-protocol: HTTPS
+          # alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:us-east-1:174950171951:certificate/30f13aa5-78bd-4b99-9b2d-d4eee35bfb24
+          alb.ingress.kubernetes.io/ssl-redirect: "443"
+          alb.ingress.kubernetes.io/target-type: ip
+          # nginx.ingress.kubernetes.io/ssl-passthrough: "true"
+          # kubernetes.io/ingress.class: nginx
+          # nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+          # nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+        # ingressClassName: alb
+        tls:
+          enabled: false
+      tls:
+        enabled: false
+      adminAccount:
+        password: "temp-password"
+      # argocd:
+      #   urls: "https://argo.rnd.glorify-appdev.com"
+      service:
+        type: NodePort
+      oidc:
+        dex:
+          enabled: true
+          connectors:
+            - id: github
+              name: GitHub
+              type: github
+              config:
+              - name: clientid
+                valueFrom:
+                  secretKeyRef:
+                    name: kargo-github
+                    key: clientid-rnd
+              - name: clientSecret
+                valueFrom:
+                  secretKeyRef:
+                    name: kargo-github
+                    key: clientsecret-rnd
+              redirectURI: https://kargo.rnd.devopsidiot.com/dex/callback
+    controller:
+      argocd:
+        namespace: argocd

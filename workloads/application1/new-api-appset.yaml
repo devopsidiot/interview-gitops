@@ -1,0 +1,130 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: special-app-previews
+  namespace: argo
+spec:
+  generators:
+    - pullRequest:
+        github:
+          owner: devopsidiot
+          repo: content-service
+          tokenRef:
+            key: pat
+            secretName: argocd-github
+          labels:
+          - special-app
+        requeueAfterSeconds: 60
+  template:
+    metadata:
+      name: 'preview-{{branch}}'
+    spec:
+      destination:
+        namespace: 'preview-{{branch}}'
+        server: 'https://kubernetes.default.svc'
+      project: default
+      source:
+        chart: world-eater
+        repoURL: http://chartmuseum.chartmuseum.svc:8080
+        targetRevision: 0.1.48
+        helm:
+          parameters:
+            - name: preview.enabled
+              value: "true"
+            - name: secrets.namespace
+              value: "sandbox"
+            - name: image.name
+              value: "174950171951.dkr.ecr.us-east-1.amazonaws.com/special-app"
+            - name: image.tag
+              value: "{{branch}}"
+          valuesObject:
+            alb:
+              appgroup: "{{branch}}"
+              certificate: arn:aws:acm:us-east-1:174950171951:certificate/f2495d5e-8e6b-4ba1-9b71-2c3a1ec6d2db,arn:aws:acm:us-east-1:174950171951:certificate/7b6eceee-f93a-484e-91fb-88118ac1197e
+              healthcheck: /api/v3/special-app/healthcheck
+              scheme: internet-facing
+              waf: arn:aws:wafv2:us-east-1:174950171951:regional/webacl/DEV-ACL/e786fe57-cfe4-45a0-89c8-159314be52b3
+            appSecrets:
+            - key: NO_SECRETS
+            args:
+            - dist/apps/special-app/main
+            command:
+            - node
+            configMapRef: "{{branch}}-configmap"
+            configmap:
+              AWS_MEDIACONVERT_ENDPOINT: https://vasjpylpa.mediaconvert.us-east-1.amazonaws.com/
+              AWS_MEDIACONVERT_QUEUE: arn:aws:mediaconvert:us-east-1:174950171951:queues/Default
+              AWS_MEDIACONVERT_ROLE: arn:aws:iam::174950171951:role/service-role/MediaConvert_Default_Role
+              AWS_REGION: us-east-1
+              AWS_S3_BUCKET: dev.uploads.special-app
+              AWS_S3_BUCKET_CONVERT: dev.uploads-convert.special-app
+              AWS_SQS_QUEUE_URL_ANALYTICS: https://sqs.us-east-1.amazonaws.com/174950171951/special-app-dev-analytics-processor-queue.fifo
+              AWS_SQS_QUEUE_URL_DEFAULT: https://sqs.us-east-1.amazonaws.com/174950171951/special-app-dev-processor-queue.fifo
+              CACHE_REDIS_HOST: dev-redis.aoa1il.ng.0001.use1.cache.amazonaws.com
+              CLOUDFRONT: https://dypsvnfgse5kl.cloudfront.net/
+              CLOUDFRONT_CONVERT: https://d2ih3v9z6vxch3.cloudfront.net/
+              CONTENT_MANAGER_HOST: https://asset-manager.dev.special-app.com
+              DATABASE_HOST: dev-strapi-postgres.cluster-caayze88lkpi.us-east-1.rds.amazonaws.com
+              DATABASE_NAME: smallgroup
+              DATABASE_PORT: "5432"
+              MINIMUM_ANDROID_VERSION: 2.39.0
+              MINIMUM_IOS_VERSION: 2.60.0
+              NEW_RELIC_APP_NAME: "{{branch}}"
+              NODE_ENV: dev
+            global:
+              namespace: "{{branch}}"
+            hostnames:
+            - dns: "{{branch}}.rnd.devopsidiot.com"
+              path: /
+            - dns: api.rnd.devopsidiot.com
+              path: /
+            label: "{{branch}}"
+            livenessProbe:
+              initialDelay: 60
+              path: /api/v3/special-app/healthcheck
+            maxReplicas: 9
+            minReplicas: 3
+            readinessProbe:
+              initialDelay: 60
+              path: /api/health
+            resources:
+              limits:
+                cpu: "4"
+                memory: 4Gi
+              requests:
+                cpu: 550m
+                memory: 2Gi
+            scaling:
+              activationTargetMetricValue: "100"
+              metricName: RequestCountPerTarget
+              metricStat: Sum
+              minMetricValue: "0"
+              targetGroupName: k8s-sandbox-speciala-5c5dd03e95/dc79802ed90be181
+              targetMetricValue: ".50"
+            secretRef: sandbox-shared-secrets-manager
+            sharedSecrets:
+            - key: MONGODB_URI
+            - key: MONGODB_URI_NOTES
+            - key: AWS_ACCESS_KEY
+            - key: AWS_SECRET_KEY
+            - key: CLOUDFRONT_ACCESS_KEY
+            - key: CLOUDFRONT_SECRET_KEY
+            - key: JWT_SECRET_ADMIN
+            - key: JWT_SECRET_USER
+            - key: JWT_SECRET_UPLOAD
+            - key: JWT_SECRET_MOBILE_CHECK
+            - key: JWT_FAILOVER_MOBILE_CHECK
+            - key: NEW_RELIC_LICENSE_KEY
+            - key: LOKALISE_PROJECT_ID
+            - key: LOKALISE_API_KEY
+            - key: DVC_SDK_SERVER_KEY
+            - key: CONTENT_MANAGER_API_KEY
+            - key: CONTENT_MANAGER_WEBHOOK_AUTHORIZATION_TOKEN
+            secrets:
+              namespace: sandbox
+      syncPolicy:
+        syncOptions:
+          - CreateNamespace=true
+        automated:
+          prune: true
+          selfHeal: true

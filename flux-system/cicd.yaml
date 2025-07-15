@@ -1,0 +1,17 @@
+apiVersion: kustomize.toolkit.fluxcd.io/v1beta2
+kind: Kustomization
+metadata:
+  name: rnd-cicd
+  namespace: flux-system
+spec:
+  interval: 10m0s
+  dependsOn:
+    - name: prd-infrastructure
+  sourceRef:
+    kind: GitRepository
+    name: flux-system
+  path: ./cicd
+  prune: true
+  validation: client
+  decryption:
+    provider: sops

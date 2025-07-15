@@ -1,0 +1,58 @@
+# apiVersion: helm.toolkit.fluxcd.io/v2beta1
+# kind: HelmRelease
+# metadata: 
+#   name: robusta 
+# spec:
+#   releaseName: robusta 
+#   chart:
+#     spec:
+#       chart: robusta
+#       sourceRef:
+#         kind: HelmRepository
+#         name: robusta  
+#         namespace: flux-system
+#       version: 0.10.17
+#   interval: 1h0m0s
+#   install:
+#     remediation:
+#       retries: 3
+#       #will be different or not needed
+#       #https://github.com/robusta-dev/robusta/blob/master/helm/robusta/values.yaml
+#   values:
+#     enablePlatformPlaybooks: true
+#     enablePrometheusStack: true
+#     globalConfig:
+#       account_id: "{{ env.ACCOUNT_ID }}"
+#       signing_key: "{{ env.SIGNING_KEY }}"
+#     runner:
+#       sendAdditionalTelemetry: true
+#       additional_env_vars:
+#       - name: SIGNING_KEY
+#         valueFrom:
+#           secretKeyRef:
+#             name: my-robusta-secrets
+#             key: signing_key
+#       - name: ACCOUNT_ID
+#         valueFrom:
+#           secretKeyRef:
+#             name: my-robusta-secrets
+#             key: account_id
+#       - name: SLACK_API_KEY
+#         valueFrom:
+#           secretKeyRef:
+#             name: my-robusta-secrets
+#             key: slack_api_key
+#       - name: ROBUSTA_UI_TOKEN
+#         valueFrom:
+#           secretKeyRef:
+#             name: my-robusta-secrets
+#             key: robusta_ui_token
+#     sinksConfig:
+#     - slack_sink:
+#         api_key: "{{ env.SLACK_API_KEY }}"
+#         name: main_slack_sink
+#         slack_channel: robusta-k8s-notifications
+#     - robusta_sink:
+#         name: robusta_ui_sink
+#         token: "{{ env.ROBUSTA_UI_TOKEN }}"
+      

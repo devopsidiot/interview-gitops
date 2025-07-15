@@ -1,0 +1,24 @@
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: get-dependabot-alerts
+  namespace: flux-system
+spec:
+  schedule: "0 17 * * *" # Run everyday at 5pm UTC / 10am PST
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: get-dependabot-alerts
+              image: 174950171951.dkr.ecr.us-east-1.amazonaws.com/get-dependabot-alerts:v1.2.1
+              env:
+                - name: GITHUB_TOKEN
+                  valueFrom:
+                    secretKeyRef:
+                      name: http-credentials
+                      key:  password
+          restartPolicy: Never

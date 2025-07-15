@@ -1,0 +1,86 @@
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: argo
+  namespace: argocd
+spec:
+  valuesFrom:
+  - kind: Secret
+    name: argocd-github
+    valuesKey: ssh
+    targetPath: config.repositoryCredentials
+  - kind: Secret
+    name: argocd-github
+    valuesKey: user 
+    targetPath: config.repositories.usernameSecret
+  - kind: Secret
+    name: argocd-github
+    valuesKey: pat
+    targetPath: config.repositories.passwordSecret
+  releaseName: argo
+  chart:
+    spec:
+      chart: argo-cd
+      sourceRef:
+        kind: HelmRepository
+        name: argo
+        namespace: flux-system
+      version: 5.51.4
+  interval: 5m
+  install:
+    crds: CreateReplace
+    remediation:
+      retries: 20
+  upgrade:
+    crds: CreateReplace    
+  # Default values
+  # https://github.com/argoproj/argo-helm/blob/master/charts/argo-cd/values.yaml
+  values:
+    dex:
+      env:
+      - name: GITHUB_CLIENT_ID
+        valueFrom:
+          secretKeyRef:
+            name: argocd-github
+            key: clientid
+      - name: GITHUB_CLIENT_SECRET
+        valueFrom:
+          secretKeyRef:
+            name: argocd-github
+            key: clientsecret
+    server:
+      rbacConfigCreate: false
+      configEnabled: false
+      service:
+        type: NodePort
+      ingress:
+        enabled: true
+        https: true
+        paths:
+        - /*
+        pathType: ImplementationSpecific
+        annotations:
+          kubernetes.io/ingress.class: alb
+          alb.ingress.kubernetes.io/scheme: internal
+          alb.ingress.kubernetes.io/ssl-policy: ELBSecurityPolicy-TLS-1-2-Ext-2018-06
+          alb.ingress.kubernetes.io/listen-ports: '[{"HTTPS":443}]'
+          alb.ingress.kubernetes.io/backend-protocol: HTTPS
+      logLevel: warn
+    controller:
+      logLevel: warn
+    repoServer:
+      logLevel: warn
+    metrics:
+      logLevel: warn
+    applicationSet:
+      extraArgs:
+        - --loglevel=warn
+    notifications:
+      enabled: true
+      logLevel: warn
+      secret:
+        create: false
+        name: "argocd-notifications-secret"
+      cm:
+        create: false
+        name: "argocd-notifications-cm"

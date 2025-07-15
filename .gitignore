@@ -1,0 +1,4 @@
+**/*.decrypted.yaml
+
+.idea/
+.DS_Store

@@ -1,0 +1,25 @@
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata: 
+  name: aws-node-termination-handler
+spec:
+  releaseName: aws-node-termination-handler
+  chart:
+    spec:
+      chart: aws-node-termination-handler
+      sourceRef:
+        kind: HelmRepository
+        name: eks
+        namespace: flux-system
+      version: 0.17.0
+  interval: 1h0m0s
+  install:
+    remediation:
+      retries: 3
+  # default values
+  # https://github.com/aws/aws-node-termination-handler/blob/main/config/helm/aws-node-termination-handler/values.yaml
+  values:
+    enableRebalanceMonitoring: true
+    enableRebalanceDraining: true
+    rbac:
+      pspEnabled: false

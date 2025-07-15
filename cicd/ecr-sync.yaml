@@ -1,0 +1,28 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: ecr-credentials-sync
+  namespace: flux-system
+spec:
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          initContainers:
+          - image: amazon/aws-cli
+            name: get-token
+            imagePullPolicy: IfNotPresent
+            # You will need to set the AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY environment variables if not using
+            # IRSA. It is recommended to store the values in a Secret and load them in the container using envFrom.
+            # envFrom:
+            # - secretRef:
+            #     name: aws-credentials
+            env:
+            - name: REGION
+              value: us-east-1 # change this if ECR repo is in a different region
+          containers:
+          - image: bitnami/kubectl
+            name: create-secret
+            env:
+            - name: ECR_REGISTRY
+              value: 174950171951.dkr.ecr.us-east-1.amazonaws.com # fill in the account id and region

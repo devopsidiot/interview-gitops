@@ -1,0 +1,55 @@
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: argo-image-updater
+  namespace: argo-image-updater
+spec:
+  releaseName: argocd-image-updater
+  chart:
+    spec:
+      chart: argocd-image-updater
+      sourceRef:
+        kind: HelmRepository
+        name: argo
+        namespace: flux-system
+      version: 0.9.1
+  interval: 1h0m0s
+  install:
+    remediation:
+      retries: 3
+  # https://github.com/argoproj/argo-helm/blob/argocd-image-updater-0.9.1/charts/argocd-image-updater/values.yaml
+  values:
+    # Am utilizing an image from this PR https://github.com/argoproj-labs/argocd-image-updater/pull/636
+    image:
+      repository: 174950171951.dkr.ecr.us-east-1.amazonaws.com/argo-image-updater
+      tag: v1-18-24
+    config:
+      applicationsAPIKind: argocd
+      argocd:
+        serverAddress: argo-argocd-server.argocd.svc.cluster.local
+        insecure: true
+      logLevel: trace
+      gitCommitUser: devopsidiot-bots
+      gitCommitMail: devopsidiot-tech+github-bots@devopsidiot.com
+      registries:
+        - name: ECR
+          api_url: https://174950171951.dkr.ecr.us-east-1.amazonaws.com
+          prefix: 174950171951.dkr.ecr.us-east-1.amazonaws.com
+          ping: true
+          insecure: false
+          credentials: ext:/scripts/ecr-login.sh
+          credsexpire: 10h
+    authScripts:
+      enabled: true
+      scripts: 
+        ecr-login.sh: |
+          #!/bin/sh
+          aws ecr --region $AWS_REGION get-authorization-token --output text --query 'authorizationData[].authorizationToken' | base64 -d
+    extraEnv:
+      - name: AWS_REGION
+        value: "us-east-1"
+    serviceAccount:
+      create: true
+      annotations:
+        eks.amazonaws.com/role-arn: arn:aws:iam::174950171951:role/rnd-argo-image-updater-role
+      name: "argocd-image-updater"

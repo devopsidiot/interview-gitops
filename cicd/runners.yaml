@@ -1,0 +1,29 @@
+apiVersion: actions.summerwind.dev/v1alpha1
+kind: RunnerDeployment
+metadata:
+   name: org-runner-rnd
+   namespace: actions-runner-system
+spec:
+  template:
+    spec:
+      organization: devopsidiot
+      labels:
+        - rnd-eks
+      env: []
+---
+apiVersion: actions.summerwind.dev/v1alpha1
+kind: HorizontalRunnerAutoscaler
+metadata:
+  name: org-runner-hra-rnd
+  namespace: actions-runner-system
+spec:
+  scaleTargetRef:
+    name: org-runner-rnd
+    # Uncomment the below in case the target is not RunnerDeployment but RunnerSet
+    #kind: RunnerSet
+  minReplicas: 1
+  maxReplicas: 5
+  scaleUpTriggers:
+  - githubEvent:
+      workflowJob: {}
+    duration: "30m"

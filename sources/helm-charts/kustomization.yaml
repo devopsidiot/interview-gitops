@@ -1,0 +1,20 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: flux-system
+resources:
+- actions-runner-controller-helm.yaml
+- argo-helm.yaml
+- bitnami-helm.yaml
+- eks-helm.yaml
+- fluentbit-helm.yaml
+- flux-dashboard-helm.yaml
+- keda-helm.yaml
+- kubecost-helm.yaml
+- metrics-server-helm.yaml
+- newrelic-helm.yaml
+- flagger-helm.yaml
+# - robusta-helm.yaml
+- chart-museum-helm.yaml
+- glorify-helm.yaml
+- external-secrets-helm.yaml
+- kargo-helm.yaml

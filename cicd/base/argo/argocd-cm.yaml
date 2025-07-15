@@ -1,0 +1,91 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-cm
+  namespace: argo
+  labels:
+    app.kubernetes.io/name: argocd-cm
+    app.kubernetes.io/part-of: argocd
+data:
+  accounts.image-updater: apiKey
+  kustomize.buildOptions: --enable-helm
+  dex.config: |
+    connectors:
+      - type: github
+        id: github
+        name: GitHub
+        config:
+          clientID: $argocd-github:clientid
+          clientSecret: $argocd-github:clientsecret
+          orgs:
+          - name: devopsidiot
+            teams:
+            - DevOps
+            - Developers
+  # Enables anonymous user access. The anonymous users get default role permissions specified argocd-rbac-cm.yaml.
+  users.anonymous.enabled: "false"
+  # Specifies token expiration duration
+  users.session.duration: "1h"
+
+  # List of Lua Scripts to introduce custom actions
+
+  # Configuration to completely ignore entire classes of resource group/kinds (optional).
+  # Excluding high-volume resources improves performance and memory usage, and reduces load and
+  # bandwidth to the Kubernetes API server.
+  # These are globs, so a "*" will match all values.
+  # If you omit groups/kinds/clusters then they will match all groups/kind/clusters.
+  # NOTE: events.k8s.io and metrics.k8s.io are excluded by default
+  resource.exclusions: |
+    - apiGroups:
+      - repositories.stash.appscode.com
+      kinds:
+      - Snapshot
+      clusters:
+      - "*.local"
+  # By default all resource group/kinds are included. The resource.inclusions setting allows customizing
+  # list of included group/kinds.
+  resource.inclusions: |
+    - apiGroups:
+      - repositories.stash.appscode.com
+      kinds:
+      - Snapshot
+      clusters:
+      - "*.local"
+  resource.compareoptions: |
+    # if ignoreAggregatedRoles set to true then differences caused by aggregated roles in RBAC resources are ignored.
+    ignoreAggregatedRoles: true
+    # disables status field diffing in specified resource types
+    # 'crd' - CustomResourceDefinitions (default)
+    # 'all' - all resources
+    # 'none' - disabled
+    ignoreResourceStatusField: crd
+  # Configuration to add a config management plugin.
+  configManagementPlugins: |
+    - name: kasane
+      init:
+        command: [kasane, update]
+      generate:
+        command: [kasane, show]
+    - name: kustomized-helm
+      init:
+        command: ["/bin/sh", "-c"]
+        args: ["helm dependency build"]
+      generate:
+        command: [sh, -c]
+        args: ["helm template --release-name release-name . > all.yaml && kustomize build"]
+  # Build options/parameters to use with `kustomize build` (optional)
+  # kustomize.buildOptions: --load-restrictor LoadRestrictionsNone
+
+  # Per-version build options and binary paths
+
+  # The metadata.label key name where Argo CD injects the app name as a tracking label (optional).
+  # Tracking labels are used to determine which resources need to be deleted when pruning.
+  # If omitted, Argo CD injects the app name into the label: 'app.kubernetes.io/instance'
+  application.instanceLabelKey: devopsidiot.com
+
+  # disables admin user. Admin is enabled by default
+
+  # add an additional local user with apiKey and login capabilities
+  #   apiKey - allows generating API keys
+  #   login - allows to login using UI
+  admin.enabled: "true"

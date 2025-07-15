@@ -1,0 +1,46 @@
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: newrelic
+  namespace: newrelic
+spec:
+  valuesFrom:
+    - kind: Secret
+      name: newrelic-secret
+      valuesKey: API_KEY
+      targetPath: global.licenseKey
+  releaseName: newrelic
+  chart:
+    spec:
+      chart: nri-bundle
+      sourceRef:
+        kind: HelmRepository
+        name: newrelic
+        namespace: flux-system
+      version: 5.0.28
+  interval: 5m
+  install:
+    remediation:
+      retries: 3
+  upgrade:
+    remediation:
+      retries: 3
+  # Default values
+  # https://github.com/newrelic/helm-charts/blob/master/charts/nri-bundle/values.yaml
+  values:
+    nri-prometheus:
+      enabled: false
+    # webhook:
+    #   enabled: true
+    newrelic-infrastructure:
+      enabled: true
+    kube-state-metrics:
+      enabled: true
+    nri-kube-events:
+      enabled: true
+    newrelic-logging:
+      enabled: true
+    nri-metadata-injection:
+      enabled: true
+    global:
+      cluster: prod-eks

@@ -1,0 +1,27 @@
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: argo
+  namespace: argocd
+spec:
+  values:
+    dex:
+      env:
+      - name: GITHUB_CLIENT_ID
+        valueFrom:
+          secretKeyRef:
+            name: argocd-github
+            key: clientid-rnd
+      - name: GITHUB_CLIENT_SECRET
+        valueFrom:
+          secretKeyRef:
+            name: argocd-github
+            key: clientsecret-rnd
+    server:
+      config:
+        url: "https://argocd.rnd.devopsidiot.com"
+      ingress:
+        annotations:
+          alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:us-east-1:174950171951:certificate/30f13aa5-78bd-4b99-9b2d-d4eee35bfb24
+        hosts:
+          - argocd.rnd.devopsidiot.com  
