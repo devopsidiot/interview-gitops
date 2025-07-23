@@ -1,18 +1,18 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: new-api-test
+  name: flask-app
   namespace: argocd
   annotations:
-    argocd-image-updater.argoproj.io/image-list: 174950171951.dkr.ecr.us-east-1.amazonaws.com/new-api
-    argocd-image-updater.argoproj.io/new-api.helm.image-name: image.name
-    argocd-image-updater.argoproj.io/new-api.helm.image-tag: image.tag
+    argocd-image-updater.argoproj.io/image-list: 174950171951.dkr.ecr.us-east-1.amazonaws.com/flask-app
+    argocd-image-updater.argoproj.io/flask-app.helm.image-name: image.name
+    argocd-image-updater.argoproj.io/flask-app.helm.image-tag: image.tag
     argocd-image-updater.argoproj.io/allow-tags: regexp:develop-v.*
     argocd-image-updater.argoproj.io/update-strategy: newest-build
     argocd-image-updater.argoproj.io/pull-secret: ext:/scripts/ecr-login.sh
-    argocd-image-updater.argoproj.io/git-repository: git@github.com:devopsidiot/interview-gitops.git
+    argocd-image-updater.argoproj.io/git-repository: git@github.com:devopsidiot/interview-python-webapp.git
     argocd-image-updater.argoproj.io/write-back-method: git:secret:argo-image-updater/argocd-image-updater-git-creds
-    argocd-image-updater.argoproj.io/write-back-target: "helmvalues:workloads/application/new-api-rnd.yaml"
+    argocd-image-updater.argoproj.io/write-back-target: "helmvalues:infrastructure/pod/flask-app.yaml"
     argocd-image-updater.argoproj.io/git-branch: rnd
   finalizers:
   - resources-finalizer.argocd.argoproj.io
@@ -23,8 +23,8 @@ spec:
       chart: world-eater
       helm:
         valueFiles:
-        - $values/workloads/big-test/new-api-rnd.yaml
-    - repoURL: git@github.com:devopsidiot/interview-gitops.git
+        - $values/infrastructure/prod/flask-app.yaml
+    - repoURL: git@github.com:devopsidiot/interview-python-webapp.git
       targetRevision: main
       ref: values
   destination:

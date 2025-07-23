@@ -1,19 +1,19 @@
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
-  name: special-app-previews
+  name: flask-app-previews
   namespace: argo
 spec:
   generators:
     - pullRequest:
         github:
           owner: devopsidiot
-          repo: content-service
+          repo: interview-python-webapp
           tokenRef:
             key: pat
             secretName: argocd-github
           labels:
-          - special-app
+          - flask-app
         requeueAfterSeconds: 60
   template:
     metadata:
@@ -34,20 +34,20 @@ spec:
             - name: secrets.namespace
               value: "sandbox"
             - name: image.name
-              value: "174950171951.dkr.ecr.us-east-1.amazonaws.com/special-app"
+              value: "174950171951.dkr.ecr.us-east-1.amazonaws.com/flask-app"
             - name: image.tag
               value: "{{branch}}"
           valuesObject:
             alb:
               appgroup: "{{branch}}"
               certificate: arn:aws:acm:us-east-1:174950171951:certificate/f2495d5e-8e6b-4ba1-9b71-2c3a1ec6d2db,arn:aws:acm:us-east-1:174950171951:certificate/7b6eceee-f93a-484e-91fb-88118ac1197e
-              healthcheck: /api/v3/special-app/healthcheck
+              healthcheck: /api/v3/flask-app/healthcheck
               scheme: internet-facing
               waf: arn:aws:wafv2:us-east-1:174950171951:regional/webacl/DEV-ACL/e786fe57-cfe4-45a0-89c8-159314be52b3
             appSecrets:
             - key: NO_SECRETS
             args:
-            - dist/apps/special-app/main
+            - dist/apps/flask-app/main
             command:
             - node
             configMapRef: "{{branch}}-configmap"
@@ -56,14 +56,14 @@ spec:
               AWS_MEDIACONVERT_QUEUE: arn:aws:mediaconvert:us-east-1:174950171951:queues/Default
               AWS_MEDIACONVERT_ROLE: arn:aws:iam::174950171951:role/service-role/MediaConvert_Default_Role
               AWS_REGION: us-east-1
-              AWS_S3_BUCKET: dev.uploads.special-app
-              AWS_S3_BUCKET_CONVERT: dev.uploads-convert.special-app
-              AWS_SQS_QUEUE_URL_ANALYTICS: https://sqs.us-east-1.amazonaws.com/174950171951/special-app-dev-analytics-processor-queue.fifo
-              AWS_SQS_QUEUE_URL_DEFAULT: https://sqs.us-east-1.amazonaws.com/174950171951/special-app-dev-processor-queue.fifo
+              AWS_S3_BUCKET: dev.uploads.flask-app
+              AWS_S3_BUCKET_CONVERT: dev.uploads-convert.flask-app
+              AWS_SQS_QUEUE_URL_ANALYTICS: https://sqs.us-east-1.amazonaws.com/174950171951/flask-app-dev-analytics-processor-queue.fifo
+              AWS_SQS_QUEUE_URL_DEFAULT: https://sqs.us-east-1.amazonaws.com/174950171951/flask-app-dev-processor-queue.fifo
               CACHE_REDIS_HOST: dev-redis.aoa1il.ng.0001.use1.cache.amazonaws.com
               CLOUDFRONT: https://dypsvnfgse5kl.cloudfront.net/
               CLOUDFRONT_CONVERT: https://d2ih3v9z6vxch3.cloudfront.net/
-              CONTENT_MANAGER_HOST: https://asset-manager.dev.special-app.com
+              CONTENT_MANAGER_HOST: https://asset-manager.dev.flask-app.com
               DATABASE_HOST: dev-strapi-postgres.cluster-caayze88lkpi.us-east-1.rds.amazonaws.com
               DATABASE_NAME: smallgroup
               DATABASE_PORT: "5432"
@@ -81,7 +81,7 @@ spec:
             label: "{{branch}}"
             livenessProbe:
               initialDelay: 60
-              path: /api/v3/special-app/healthcheck
+              path: /api/v3/flask-app/healthcheck
             maxReplicas: 9
             minReplicas: 3
             readinessProbe:
